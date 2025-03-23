@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KDY端口验证</title>
+    <style>
+        /* 公共样式 */
+        body {
+            margin: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            transition: all 0.5s;
+            background: url('https://img.zcool.cn/community/01b8fc5d3ae931a8012187f416a64d.jpg') center/cover; /* 可达鸭背景 */
+            /* 新增的16:9适配代码 */
+    aspect-ratio: 16/9;
+    max-width: 100vw;
+    max-height: 100vh;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+        }
+
+        /* 登录页面样式 */
+        .login-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: rgba(255,255,255,0.85);
+        }
+
+        /* 认证页面样式 */
+        .auth-page {
+            display: none;
+            height: 100vh;
+            background: url('https://pics.craiyon.com/2023-07-29/5d03813dee3f4d5d8d5d90e7a7fb6f61.webp') center/cover;
+            position: relative;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        input {
+            padding: 12px 20px;
+            border: 2px solid #007bff;
+            border-radius: 25px;
+            width: 250px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            transition: transform 0.2s;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        /* 状态面板 */
+        .status-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.9) url('https://img95.699pic.com/photo/40177/0545.jpg_wh860.jpg') right bottom/auto 60% no-repeat; /* 状态框可达鸭 */
+            padding: 30px 50px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            input, button {
+                width: 90% !important;
+                margin: 5px 0;
+            }
+            
+            .status-panel {
+                min-width: 300px !important;
+                padding: 20px !important;
+                background-size: auto 50%;
+            }
+            
+            .kdy-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<audio id="bgm" loop style="position: fixed; bottom: 10px; left: 10px; width: 200px;">
+  <source src="外链地址" type="audio/mpeg">
+</audio>
+
+<script>
+// 在认证成功后自动播放
+registerBtn.addEventListener('click', () => {
+  document.getElementById('bgm').play().catch(() => {
+    // 处理自动播放被阻止的情况
+    console.log('需要用户交互后才能播放音乐');
+  });
+});
+</script>
+<body>
+    <!-- 登录页面 -->
+    <div class="login-page">
+        <h2>KDY端口验证网页</h2>
+        <div class="button-group">
+            <input type="text" id="username" placeholder="请输入购买卡密，否则等于裸奔" autocomplete="off">
+            <button id="registerBtn">授权认证</button>
+            <button id="unbindBtn">解除绑定</button>
+        </div>
+    </div>
+
+    <!-- 认证通过页面 -->
+    <div class="auth-page">
+        <div class="status-panel">
+            <h1 class="kdy-title">正版KDY认证系统</h1>
+            <div class="status-box">
+                <h3>KDY 核心端口</h3>
+                <p>当前状态：<span style="color:green;">■ 运行中</span></p >
+            </div>
+            <div class="notice">
+                ※ 安全守则 ※<br>
+                演戏游玩才能长远发展<br>
+                请严格遵守作战纪律<br>
+                禁止无差别攻击行为
+            </div>
+            <div id="live-time"></div>
+        </div>
+    </div>
+
+<script>
+    // DOM元素获取
+    const username = document.getElementById('username');
+    const registerBtn = document.getElementById('registerBtn');
+    const unbindBtn = document.getElementById('unbindBtn');
+    const loginPage = document.querySelector('.login-page');
+    const authPage = document.querySelector('.auth-page');
+    const liveTime = document.getElementById('live-time');
+
+    // 输入验证
+    function validateInput() {
+        const isValid = username.value.trim().length > 0;
+        registerBtn.disabled = !isValid;
+        unbindBtn.disabled = !isValid;
+    }
+
+    // 实时输入监听
+    username.addEventListener('input', validateInput);
+
+    // 时间更新
+    function updateTime() {
+        const now = new Date();
+        liveTime.innerHTML = now.toLocaleString('zh-CN').replace(/\//g, '-');
+    }
+
+    // 认证处理
+    registerBtn.addEventListener('click', () => {
+        const card = username.value.trim();
+        if (!card) return;
+        
+        // 新增卡密格式验证
+        const cardRegex = /^[A-Za-z0-9]{10}$/;
+        if (!cardRegex.test(card)) {
+            alert('卡密错误，必须为10位数字和字母的组合');
+            return;
+        }
+
+        loginPage.style.display = 'none';
+        authPage.style.display = 'block';
+        setInterval(updateTime, 1000);
+        updateTime();
+    });
+
+    // 解绑处理
+    unbindBtn.addEventListener('click', () => {
+        const card = username.value.trim();
+        if (!card) {
+            alert('请先输入卡密！');
+            return;
+        }
+        
+        // 解绑时也添加格式验证
+        const cardRegex = /^[A-Za-z0-9]{10}$/;
+        if (!cardRegex.test(card)) {
+            alert('卡密错误，必须为10位数字和字母的组合');
+            return;
+        }
+
+        if (confirm('确定要解除绑定吗？')) {
+            alert('解绑请求已提交管理员审核');
+        }
+    });
+
+    // 初始化禁用按钮
+    validateInput();
+</script>
+</body>
+</html>
